@@ -29,6 +29,7 @@ jobs:
           cordova platform add android
           rm -rf www/*
           cp ../index.html www/index.html
+          mkdir -p res/icon/android
           cp ../myicon.png res/icon/android/xxhdpi.png
           cp ../myicon.png res/icon/android/xxxhdpi.png
       - name: Build Pure APK
