@@ -21,7 +21,6 @@
             color: var(--text-color);
             margin: 0;
             padding: 15px;
-            padding-bottom: 80px;
         }
 
         .container {
@@ -58,6 +57,41 @@
             margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        .info-card-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+        .info-card-summary {
+            flex: 1;
+            text-align: right;
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .info-card-chevron {
+            font-size: 0.75rem;
+            color: #999;
+            transition: transform 0.2s;
+        }
+        .info-card-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+        .info-card-body {
+            margin-top: 12px;
+        }
+        .info-card-body.collapsed {
+            display: none;
+        }
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -90,19 +124,19 @@
             margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
             text-align: center;
         }
         .stat-box { border-right: 1px solid var(--border-color); }
         .stat-box:last-child { border-right: none; }
-        .stat-label { font-size: 0.8rem; color: #666; margin-bottom: 5px; }
-        .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); }
+        .stat-label { font-size: 0.75rem; color: #666; margin-bottom: 5px; }
+        .stat-value { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); }
 
         .action-group {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         .btn-action {
             flex: 1;
@@ -116,6 +150,17 @@
         }
         .btn-save { background-color: var(--primary-color); color: white; }
         .btn-history { background-color: #555; color: white; }
+        .btn-new { background-color: #fff; color: #777; border: 1px solid #ccc; }
+
+        .autosave-note {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #999;
+            margin-bottom: 15px;
+        }
+
+        .score-under { color: var(--primary-color) !important; }
+        .score-over { color: var(--danger-color) !important; }
 
         .history-modal {
             display: none;
@@ -149,7 +194,7 @@
             padding: 12px;
             margin-bottom: 15px;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 5px;
             text-align: center;
         }
@@ -219,9 +264,57 @@
         .btn-count { width: 32px; height: 32px; border-radius: 5px; border: 1px solid var(--border-color); background-color: #fff; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
         .putt-value { font-size: 1.1rem; font-weight: bold; min-width: 20px; text-align: center; }
 
-        .footer-quote {
-            position: fixed; bottom: 0; left: 0; right: 0; background-color: #333; color: #fff;
-            text-align: center; padding: 10px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 -2px 5px rgba(0,0,0,0.2); z-index: 100;
+        .hole-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .hole-nav-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--primary-color);
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .hole-nav-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .hole-nav-label {
+            font-weight: bold;
+            font-size: 1.05rem;
+            color: var(--text-color);
+        }
+
+        .hole-jump-strip {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        .hole-jump-btn {
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background-color: #fff;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #555;
+        }
+        .hole-jump-btn.current {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
         }
     </style>
 </head>
@@ -232,10 +325,10 @@
         <div>
             <!-- 상단 제목 클릭 시 이동하는 링크 -->
             <a href="https://m.blog.naver.com/sportpie/224314534991" target="_blank">
-                <h1>[GOLF] 내 골프 데이터 분석기 PRO</h1>
+                <h1>⛳ 골프 스코어카드</h1>
             </a>
         </div>
-        <p>"데이터로 치면 데이터로 좋아집니다" ⛳</p>
+        <p>"데이터로 치면 데이터로 좋아집니다"</p>
         <div>
             <!-- 스포츠파이 클릭 시 이동하는 링크 -->
             <a href="https://m.blog.naver.com/sportpie" target="_blank" class="made-by">
@@ -245,23 +338,34 @@
     </header>
 
     <div class="info-card">
-        <div class="info-grid">
-            <div>
-                <label style="font-size:0.8rem; color:#666;">라운딩 날짜</label>
-                <input type="date" id="round-date" class="info-input">
-            </div>
-            <div>
-                <label style="font-size:0.8rem; color:#666;">골프장명 (CC)</label>
-                <input type="text" id="cc-name" class="info-input" placeholder="예: 여주 CC">
-            </div>
+        <div class="info-card-header" onclick="toggleInfoCard()">
+            <span class="info-card-title">라운딩 정보</span>
+            <span class="info-card-summary" id="info-card-summary"></span>
+            <span class="info-card-chevron" id="info-card-chevron">▾</span>
         </div>
-        <div>
-            <label style="font-size:0.8rem; color:#666;">라운딩 메모 (날씨, 동반자, 특이사항)</label>
-            <textarea id="round-memo" class="memo-input" placeholder="오늘의 드라이버 팁이나 기억하고 싶은 점을 적어보세요."></textarea>
+        <div class="info-card-body" id="info-card-body">
+            <div class="info-grid">
+                <div>
+                    <label style="font-size:0.8rem; color:#666;">라운딩 날짜</label>
+                    <input type="date" id="round-date" class="info-input" oninput="saveDraft()">
+                </div>
+                <div>
+                    <label style="font-size:0.8rem; color:#666;">골프장명 (CC)</label>
+                    <input type="text" id="cc-name" class="info-input" placeholder="예: 여주 CC" oninput="saveDraft()">
+                </div>
+            </div>
+            <div>
+                <label style="font-size:0.8rem; color:#666;">라운딩 메모 (날씨, 동반자, 특이사항)</label>
+                <textarea id="round-memo" class="memo-input" placeholder="오늘의 드라이버 팁이나 기억하고 싶은 점을 적어보세요." oninput="saveDraft()"></textarea>
+            </div>
         </div>
     </div>
 
     <div class="dashboard">
+        <div class="stat-box">
+            <div class="stat-label">합계 스코어</div>
+            <div class="stat-value" id="total-score">-</div>
+        </div>
         <div class="stat-box">
             <div class="stat-label">페어웨이 적중 (FIR)</div>
             <div class="stat-value" id="fir-rate">0%</div>
@@ -279,7 +383,16 @@
     <div class="action-group">
         <button class="btn-action btn-save" onclick="saveRounding()">현재 라운딩 저장</button>
         <button class="btn-action btn-history" onclick="openHistory()">이력 불러오기</button>
+        <button class="btn-action btn-new" onclick="startNewRound()">새 라운딩</button>
     </div>
+    <div class="autosave-note" id="autosave-note">입력 내용은 자동으로 저장됩니다</div>
+
+    <div class="hole-nav">
+        <button class="hole-nav-btn" id="prev-hole-btn" onclick="prevHole()">‹ 이전 홀</button>
+        <span class="hole-nav-label" id="hole-nav-label">1 / 18홀</span>
+        <button class="hole-nav-btn" id="next-hole-btn" onclick="nextHole()">다음 홀 ›</button>
+    </div>
+    <div class="hole-jump-strip" id="hole-jump-strip"></div>
 
     <div id="holes-container"></div>
 </div>
@@ -292,6 +405,10 @@
         </div>
         
         <div id="total-summary-dashboard" class="summary-dashboard">
+            <div style="border-right:1px solid #c8e6c9;">
+                <div class="summary-label">평균 스코어</div>
+                <div class="summary-value" id="all-avg-score">-</div>
+            </div>
             <div style="border-right:1px solid #c8e6c9;">
                 <div class="summary-label">전체 평균 FIR</div>
                 <div class="summary-value" id="all-avg-fir">-</div>
@@ -310,73 +427,138 @@
     </div>
 </div>
 
-<div class="footer-quote">
-    💬 "감으로 치면 감으로 무너진다. 데이터로 치면 데이터로 좋아진다."
-</div>
-
 <script>
     var totalHoles = 18;
     var golfData = [];
-    
-    document.getElementById('round-date').value = new Date().toISOString().substring(0, 10);
+    var currentEditingId = null;
+    var currentHoleIndex = 0;
+    var infoCardCollapsed = true;
+
+    function toggleInfoCard() {
+        infoCardCollapsed = !infoCardCollapsed;
+        renderInfoCardState();
+        saveDraft();
+    }
+
+    function renderInfoCardState() {
+        var body = document.getElementById('info-card-body');
+        var chevron = document.getElementById('info-card-chevron');
+        if (infoCardCollapsed) {
+            body.classList.add('collapsed');
+            chevron.classList.add('collapsed');
+        } else {
+            body.classList.remove('collapsed');
+            chevron.classList.remove('collapsed');
+        }
+        var date = document.getElementById('round-date').value;
+        var cc = document.getElementById('cc-name').value.trim();
+        document.getElementById('info-card-summary').innerText = infoCardCollapsed ? (date + (cc ? ' · ' + cc : '')) : '';
+    }
 
     function initHolesData() {
         golfData = [];
         for (var i = 0; i < totalHoles; i++) {
-            golfData.push({ holeNum: i + 1, par: 4, fir: null, gir: null, putts: 2 });
+            golfData.push({ holeNum: i + 1, par: 4, score: 4, fir: null, gir: null, putts: 2 });
         }
     }
 
-    function renderHolesUI() {
+    function normalizeHoles(holes) {
+        for (var i = 0; i < holes.length; i++) {
+            if (typeof holes[i].score !== 'number') {
+                holes[i].score = holes[i].par;
+            }
+        }
+        return holes;
+    }
+
+    function renderCurrentHole() {
+        renderHoleNav();
+
         var container = document.getElementById('holes-container');
         container.innerHTML = '';
 
-        for (var j = 0; j < totalHoles; j++) {
-            var card = document.createElement('div');
-            card.className = 'hole-card';
-            
-            var fActiveO = golfData[j].fir === true ? ' active-green' : '';
-            var fActiveX = golfData[j].fir === false ? ' active-red' : '';
-            var gActiveO = golfData[j].gir === true ? ' active-green' : '';
-            var gActiveX = golfData[j].gir === false ? ' active-red' : '';
-            var par3Style = golfData[j].par === 3 ? ' style="opacity:0.3; pointer-events:none;"' : '';
+        var j = currentHoleIndex;
+        var card = document.createElement('div');
+        card.className = 'hole-card';
 
-            var html = '';
-            html += '<div class="hole-header">';
-            html += '    <span class="hole-title">' + golfData[j].holeNum + '번 홀</span>';
-            html += '    <select class="par-select" onchange="updatePar(' + j + ', this.value)">';
-            html += '        <option value="3"' + (golfData[j].par === 3 ? ' selected' : '') + '>Par 3</option>';
-            html += '        <option value="4"' + (golfData[j].par === 4 ? ' selected' : '') + '>Par 4</option>';
-            html += '        <option value="5"' + (golfData[j].par === 5 ? ' selected' : '') + '>Par 5</option>';
-            html += '    </select>';
-            html += '</div>';
-            html += '<div class="row" id="fir-row-' + j + '"' + par3Style + '>';
-            html += '    <span class="label">페어웨이 적중 (FIR)</span>';
-            html += '    <div class="btn-group">';
-            html += '        <button class="btn-toggle' + fActiveO + '" onclick="toggleFir(' + j + ', true, this)">O</button>';
-            html += '        <button class="btn-toggle" ' + fActiveX + '" onclick="toggleFir(' + j + ', false, this)">X</button>';
-            html += '    </div>';
-            html += '</div>';
-            html += '<div class="row">';
-            html += '    <span class="label">그린 적중 (GIR)</span>';
-            html += '    <div class="btn-group">';
-            html += '        <button class="btn-toggle' + gActiveO + '" onclick="toggleGir(' + j + ', true, this)">O</button>';
-            html += '        <button class="btn-toggle' + gActiveX + '" onclick="toggleGir(' + j + ', false, this)">X</button>';
-            html += '    </div>';
-            html += '</div>';
-            html += '<div class="row">';
-            html += '    <span class="label">홀당 퍼팅 수</span>';
-            html += '    <div class="putt-ctrl">';
-            html += '        <button class="btn-count" onclick="changePutt(' + j + ', -1)">-</button>';
-            html += '        <span class="putt-value" id="putt-val-' + j + '">' + golfData[j].putts + '</span>';
-            html += '        <button class="btn-count" onclick="changePutt(' + j + ', 1)">+</button>';
-            html += '    </div>';
-            html += '</div>';
-            
-            card.innerHTML = html;
-            container.appendChild(card);
+        var fActiveO = golfData[j].fir === true ? ' active-green' : '';
+        var fActiveX = golfData[j].fir === false ? ' active-red' : '';
+        var gActiveO = golfData[j].gir === true ? ' active-green' : '';
+        var gActiveX = golfData[j].gir === false ? ' active-red' : '';
+        var par3Style = golfData[j].par === 3 ? ' style="opacity:0.3; pointer-events:none;"' : '';
+
+        var scoreDiff = golfData[j].score - golfData[j].par;
+        var scoreClass = scoreDiff < 0 ? ' score-under' : (scoreDiff > 0 ? ' score-over' : '');
+
+        var html = '';
+        html += '<div class="hole-header">';
+        html += '    <span class="hole-title">' + golfData[j].holeNum + '번 홀</span>';
+        html += '    <select class="par-select" onchange="updatePar(' + j + ', this.value)">';
+        html += '        <option value="3"' + (golfData[j].par === 3 ? ' selected' : '') + '>Par 3</option>';
+        html += '        <option value="4"' + (golfData[j].par === 4 ? ' selected' : '') + '>Par 4</option>';
+        html += '        <option value="5"' + (golfData[j].par === 5 ? ' selected' : '') + '>Par 5</option>';
+        html += '    </select>';
+        html += '</div>';
+        html += '<div class="row">';
+        html += '    <span class="label">홀 스코어 (타수)</span>';
+        html += '    <div class="putt-ctrl">';
+        html += '        <button class="btn-count" onclick="changeScore(' + j + ', -1)">-</button>';
+        html += '        <span class="putt-value' + scoreClass + '" id="score-val-' + j + '">' + golfData[j].score + '</span>';
+        html += '        <button class="btn-count" onclick="changeScore(' + j + ', 1)">+</button>';
+        html += '    </div>';
+        html += '</div>';
+        html += '<div class="row" id="fir-row-' + j + '"' + par3Style + '>';
+        html += '    <span class="label">페어웨이 적중 (FIR)</span>';
+        html += '    <div class="btn-group">';
+        html += '        <button class="btn-toggle' + fActiveO + '" onclick="toggleFir(' + j + ', true, this)">O</button>';
+        html += '        <button class="btn-toggle' + fActiveX + '" onclick="toggleFir(' + j + ', false, this)">X</button>';
+        html += '    </div>';
+        html += '</div>';
+        html += '<div class="row">';
+        html += '    <span class="label">그린 적중 (GIR)</span>';
+        html += '    <div class="btn-group">';
+        html += '        <button class="btn-toggle' + gActiveO + '" onclick="toggleGir(' + j + ', true, this)">O</button>';
+        html += '        <button class="btn-toggle' + gActiveX + '" onclick="toggleGir(' + j + ', false, this)">X</button>';
+        html += '    </div>';
+        html += '</div>';
+        html += '<div class="row">';
+        html += '    <span class="label">홀당 퍼팅 수</span>';
+        html += '    <div class="putt-ctrl">';
+        html += '        <button class="btn-count" onclick="changePutt(' + j + ', -1)">-</button>';
+        html += '        <span class="putt-value" id="putt-val-' + j + '">' + golfData[j].putts + '</span>';
+        html += '        <button class="btn-count" onclick="changePutt(' + j + ', 1)">+</button>';
+        html += '    </div>';
+        html += '</div>';
+
+        card.innerHTML = html;
+        container.appendChild(card);
+    }
+
+    function renderHoleNav() {
+        document.getElementById('hole-nav-label').innerText = (currentHoleIndex + 1) + ' / ' + totalHoles + '홀';
+        document.getElementById('prev-hole-btn').disabled = currentHoleIndex === 0;
+        document.getElementById('next-hole-btn').disabled = currentHoleIndex === totalHoles - 1;
+
+        var strip = document.getElementById('hole-jump-strip');
+        strip.innerHTML = '';
+        for (var i = 0; i < totalHoles; i++) {
+            var btn = document.createElement('button');
+            btn.className = 'hole-jump-btn' + (i === currentHoleIndex ? ' current' : '');
+            btn.textContent = i + 1;
+            btn.onclick = (function (idx) { return function () { goToHole(idx); }; })(i);
+            strip.appendChild(btn);
         }
     }
+
+    function goToHole(idx) {
+        if (idx < 0 || idx >= totalHoles) return;
+        currentHoleIndex = idx;
+        renderCurrentHole();
+        saveDraft();
+    }
+
+    function prevHole() { goToHole(currentHoleIndex - 1); }
+    function nextHole() { goToHole(currentHoleIndex + 1); }
 
     function updatePar(index, value) {
         var par = parseInt(value);
@@ -392,7 +574,9 @@
             firRow.style.opacity = '1';
             firRow.style.pointerEvents = 'auto';
         }
+        updateScoreColor(index);
         calculateStats();
+        saveDraft();
     }
 
     function toggleFir(index, result, btn) {
@@ -406,6 +590,7 @@
             btn.classList.add(result ? 'active-green' : 'active-red');
         }
         calculateStats();
+        saveDraft();
     }
 
     function toggleGir(index, result, btn) {
@@ -419,6 +604,7 @@
             btn.classList.add(result ? 'active-green' : 'active-red');
         }
         calculateStats();
+        saveDraft();
     }
 
     function changePutt(index, amount) {
@@ -428,6 +614,32 @@
         golfData[index].putts = currentPutts;
         document.getElementById('putt-val-' + index).innerText = currentPutts;
         calculateStats();
+        saveDraft();
+    }
+
+    function changeScore(index, amount) {
+        var currentScore = golfData[index].score;
+        currentScore += amount;
+        if (currentScore < 1) currentScore = 1;
+        golfData[index].score = currentScore;
+        document.getElementById('score-val-' + index).innerText = currentScore;
+        updateScoreColor(index);
+        calculateStats();
+        saveDraft();
+    }
+
+    function updateScoreColor(index) {
+        var el = document.getElementById('score-val-' + index);
+        if (!el) return;
+        var diff = golfData[index].score - golfData[index].par;
+        el.classList.remove('score-under', 'score-over');
+        if (diff < 0) el.classList.add('score-under');
+        else if (diff > 0) el.classList.add('score-over');
+    }
+
+    function formatDiff(diff) {
+        if (diff === 0) return 'E';
+        return diff > 0 ? ('+' + diff) : String(diff);
     }
 
     function calculateStats() {
@@ -448,14 +660,22 @@
         var girRate = girCount > 0 ? Math.round((girSuccess / girCount) * 100) : 0;
 
         var totalPutts = 0;
-        for (var i = 0; i < golfData.length; i++) { totalPutts += golfData[i].putts; }
+        var totalScore = 0;
+        var totalPar = 0;
+        for (var i = 0; i < golfData.length; i++) {
+            totalPutts += golfData[i].putts;
+            totalScore += golfData[i].score;
+            totalPar += golfData[i].par;
+        }
         var avgPutts = (totalPutts / totalHoles).toFixed(1);
+        var scoreDiff = totalScore - totalPar;
 
         document.getElementById('fir-rate').innerText = firRate + '%';
         document.getElementById('gir-rate').innerText = girRate + '%';
         document.getElementById('avg-putts').innerText = avgPutts;
+        document.getElementById('total-score').innerText = totalScore + ' (' + formatDiff(scoreDiff) + ')';
 
-        return { firRate: firRate, girRate: girRate, avgPutts: avgPutts };
+        return { firRate: firRate, girRate: girRate, avgPutts: avgPutts, totalScore: totalScore, totalPar: totalPar, scoreDiff: scoreDiff };
     }
 
     function saveRounding() {
@@ -464,20 +684,29 @@
         var memo = document.getElementById('round-memo').value;
         var stats = calculateStats();
 
-        var roundItem = {
-            id: new Date().getTime(),
-            date: date,
-            ccName: ccName,
-            memo: memo,
-            stats: stats,
-            holes: golfData
-        };
-
         var existingHistory = JSON.parse(localStorage.getItem('golfHistory') || '[]');
-        existingHistory.push(roundItem);
-        localStorage.setItem('golfHistory', JSON.stringify(existingHistory));
 
-        alert('라운딩 데이터가 성공적으로 저장되었습니다!');
+        if (currentEditingId !== null) {
+            var idx = -1;
+            for (var i = 0; i < existingHistory.length; i++) {
+                if (existingHistory[i].id === currentEditingId) { idx = i; break; }
+            }
+            var roundItem = { id: currentEditingId, date: date, ccName: ccName, memo: memo, stats: stats, holes: golfData };
+            if (idx > -1) {
+                existingHistory[idx] = roundItem;
+            } else {
+                existingHistory.push(roundItem);
+            }
+        } else {
+            currentEditingId = new Date().getTime();
+            var roundItem = { id: currentEditingId, date: date, ccName: ccName, memo: memo, stats: stats, holes: golfData };
+            existingHistory.push(roundItem);
+        }
+
+        localStorage.setItem('golfHistory', JSON.stringify(existingHistory));
+        saveDraft();
+
+        alert('라운딩 데이터가 성공적으로 저장되었습니다!\n(이 라운딩을 계속 수정 후 다시 저장하면 같은 기록이 갱신됩니다.)');
     }
 
     function openHistory() {
@@ -486,8 +715,9 @@
         historyList.innerHTML = '';
 
         var history = JSON.parse(localStorage.getItem('golfHistory') || '[]');
-        
+
         if (history.length === 0) {
+            document.getElementById('all-avg-score').innerText = '-';
             document.getElementById('all-avg-fir').innerText = '-';
             document.getElementById('all-avg-gir').innerText = '-';
             document.getElementById('all-avg-putts').innerText = '-';
@@ -496,12 +726,18 @@
         }
 
         var sumFir = 0; var sumGir = 0; var sumPutts = 0;
+        var sumScore = 0; var scoreCount = 0;
         for (var k = 0; k < history.length; k++) {
             sumFir += parseFloat(history[k].stats.firRate);
             sumGir += parseFloat(history[k].stats.girRate);
             sumPutts += parseFloat(history[k].stats.avgPutts);
+            if (typeof history[k].stats.totalScore === 'number') {
+                sumScore += history[k].stats.totalScore;
+                scoreCount++;
+            }
         }
-        
+
+        document.getElementById('all-avg-score').innerText = scoreCount > 0 ? (sumScore / scoreCount).toFixed(1) + '타' : '-';
         document.getElementById('all-avg-fir').innerText = Math.round(sumFir / history.length) + '%';
         document.getElementById('all-avg-gir').innerText = Math.round(sumGir / history.length) + '%';
         document.getElementById('all-avg-putts').innerText = (sumPutts / history.length).toFixed(1) + '개';
@@ -510,7 +746,11 @@
             var item = history[i];
             var card = document.createElement('div');
             card.className = 'history-item';
-            
+
+            var scoreText = typeof item.stats.totalScore === 'number'
+                ? item.stats.totalScore + '타 (' + formatDiff(item.stats.scoreDiff) + ') | '
+                : '';
+
             var inner = '';
             inner += '<div class="history-clickable" onclick="loadRounding(' + item.id + ')">';
             inner += '    <div class="history-meta">' + item.date + '</div>';
@@ -518,10 +758,10 @@
             if(item.memo) {
                 inner += '    <div style="font-size:0.85rem; color:#666; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📝 ' + item.memo + '</div>';
             }
-            inner += '    <div class="history-stats">FIR: ' + item.stats.firRate + '% | GIR: ' + item.stats.girRate + '% | 퍼팅: ' + item.stats.avgPutts + '개</div>';
+            inner += '    <div class="history-stats">' + scoreText + 'FIR: ' + item.stats.firRate + '% | GIR: ' + item.stats.girRate + '% | 퍼팅: ' + item.stats.avgPutts + '개</div>';
             inner += '</div>';
             inner += '<button class="btn-delete" onclick="deleteRounding(' + item.id + ', event)" title="삭제">&times;</button>';
-            
+
             card.innerHTML = inner;
             historyList.appendChild(card);
         }
@@ -539,14 +779,17 @@
         }
 
         if(target) {
-            if(confirm(target.date + ' [' + target.ccName + '] 데이터로 스코어카드를 덮어쓰시겠습니까?')) {
+            if(confirm(target.date + ' [' + target.ccName + '] 데이터를 불러와 이어서 수정할까요?\n(다시 저장하면 이 기록이 갱신됩니다)')) {
                 document.getElementById('round-date').value = target.date;
                 document.getElementById('cc-name').value = target.ccName;
                 document.getElementById('round-memo').value = target.memo || '';
-                golfData = target.holes;
-                
-                renderHolesUI();
+                golfData = normalizeHoles(target.holes);
+                currentEditingId = target.id;
+                currentHoleIndex = 0;
+
+                renderCurrentHole();
                 calculateStats();
+                saveDraft();
                 closeHistory();
             }
         }
@@ -554,7 +797,7 @@
 
     function deleteRounding(id, event) {
         event.stopPropagation();
-        
+
         var history = JSON.parse(localStorage.getItem('golfHistory') || '[]');
         var targetIndex = -1;
         for(var i=0; i<history.length; i++) {
@@ -565,14 +808,68 @@
             if(confirm('해당 라운딩 기록을 정말 삭제하시겠습니까?')) {
                 history.splice(targetIndex, 1);
                 localStorage.setItem('golfHistory', JSON.stringify(history));
+                if (currentEditingId === id) {
+                    currentEditingId = null;
+                    saveDraft();
+                }
                 openHistory();
             }
         }
     }
 
-    initHolesData();
-    renderHolesUI();
+    function saveDraft() {
+        var draft = {
+            date: document.getElementById('round-date').value,
+            ccName: document.getElementById('cc-name').value,
+            memo: document.getElementById('round-memo').value,
+            golfData: golfData,
+            currentEditingId: currentEditingId,
+            currentHoleIndex: currentHoleIndex,
+            infoCardCollapsed: infoCardCollapsed
+        };
+        localStorage.setItem('golfDraft', JSON.stringify(draft));
+        renderInfoCardState();
+    }
+
+    function loadDraft() {
+        var raw = localStorage.getItem('golfDraft');
+        if (!raw) return false;
+        try {
+            var draft = JSON.parse(raw);
+            if (!draft || !draft.golfData || draft.golfData.length !== totalHoles) return false;
+            document.getElementById('round-date').value = draft.date || new Date().toISOString().substring(0, 10);
+            document.getElementById('cc-name').value = draft.ccName || '';
+            document.getElementById('round-memo').value = draft.memo || '';
+            golfData = normalizeHoles(draft.golfData);
+            currentEditingId = typeof draft.currentEditingId === 'number' ? draft.currentEditingId : null;
+            currentHoleIndex = (typeof draft.currentHoleIndex === 'number' && draft.currentHoleIndex >= 0 && draft.currentHoleIndex < totalHoles) ? draft.currentHoleIndex : 0;
+            infoCardCollapsed = typeof draft.infoCardCollapsed === 'boolean' ? draft.infoCardCollapsed : true;
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function startNewRound() {
+        if (!confirm('새 라운딩을 시작할까요?\n현재 입력 중인 내용 중 저장하지 않은 부분은 사라집니다.')) return;
+        document.getElementById('round-date').value = new Date().toISOString().substring(0, 10);
+        document.getElementById('cc-name').value = '';
+        document.getElementById('round-memo').value = '';
+        currentEditingId = null;
+        currentHoleIndex = 0;
+        initHolesData();
+        renderCurrentHole();
+        calculateStats();
+        saveDraft();
+    }
+
+    if (!loadDraft()) {
+        document.getElementById('round-date').value = new Date().toISOString().substring(0, 10);
+        initHolesData();
+    }
+    renderCurrentHole();
     calculateStats();
+    saveDraft();
 </script>
 
 </body>
