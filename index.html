@@ -191,20 +191,6 @@
             padding-bottom: 10px; margin-bottom: 15px;
         }
 
-        .btn-csv-export {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid var(--primary-color);
-            border-radius: 6px;
-            background-color: #fff;
-            color: var(--primary-color);
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
         .summary-dashboard {
             background: #edf7ed;
             border: 1px solid #c8e6c9;
@@ -422,8 +408,6 @@
             <button onclick="closeHistory()" style="padding:5px 10px; cursor:pointer;">닫기</button>
         </div>
 
-        <button class="btn-csv-export" onclick="exportHistoryToCSV()">CSV로 다운로드 (엑셀에서 열기)</button>
-
         <div id="total-summary-dashboard" class="summary-dashboard">
             <div style="border-right:1px solid #c8e6c9;">
                 <div class="summary-label">평균 스코어</div>
@@ -444,19 +428,6 @@
         </div>
 
         <div id="history-list"></div>
-    </div>
-</div>
-
-<div id="csvFallbackModal" class="history-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 style="margin:0;">CSV 내용</h3>
-            <button onclick="closeCsvFallback()" style="padding:5px 10px; cursor:pointer;">닫기</button>
-        </div>
-        <p style="font-size:0.85rem; color:#666; margin-top:0;">기기에서 다운로드가 지원되지 않아요. 아래 내용을 복사해서 메모장, 카카오톡, 엑셀 앱 등에 붙여넣으세요.</p>
-        <div style="font-size:0.8rem; color:#999; margin-bottom:6px;" id="csv-fallback-filename"></div>
-        <textarea id="csv-fallback-text" readonly style="width:100%; height:200px; box-sizing:border-box; padding:10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.8rem; margin-bottom:12px;"></textarea>
-        <button class="btn-action btn-save" style="width:100%;" onclick="copyCsvFallback()">전체 복사하기</button>
     </div>
 </div>
 
@@ -740,101 +711,6 @@
         saveDraft();
 
         alert('라운딩 데이터가 성공적으로 저장되었습니다!\n(이 라운딩을 계속 수정 후 다시 저장하면 같은 기록이 갱신됩니다.)');
-    }
-
-    function csvField(value) {
-        var str = String(value === undefined || value === null ? '' : value);
-        if (/[",\n]/.test(str)) {
-            str = '"' + str.replace(/"/g, '""') + '"';
-        }
-        return str;
-    }
-
-    function exportHistoryToCSV() {
-        var history = JSON.parse(localStorage.getItem('golfHistory') || '[]');
-        if (history.length === 0) {
-            alert('저장된 라운딩 기록이 없습니다.');
-            return;
-        }
-
-        var headers = ['날짜', '골프장', '스코어', '스코어차', 'FIR(%)', 'GIR(%)', '평균퍼팅', '메모'];
-        var rows = [headers.map(csvField).join(',')];
-
-        for (var i = 0; i < history.length; i++) {
-            var item = history[i];
-            var row = [
-                item.date,
-                item.ccName,
-                typeof item.stats.totalScore === 'number' ? item.stats.totalScore : '',
-                typeof item.stats.scoreDiff === 'number' ? formatDiff(item.stats.scoreDiff) : '',
-                item.stats.firRate,
-                item.stats.girRate,
-                item.stats.avgPutts,
-                item.memo || ''
-            ];
-            rows.push(row.map(csvField).join(','));
-        }
-
-        var csvBody = rows.join('\r\n');
-        var csvContent = String.fromCharCode(0xFEFF) + csvBody;
-        var filename = '골프_라운딩_기록_' + new Date().toISOString().substring(0, 10) + '.csv';
-
-        if (navigator.share && navigator.canShare) {
-            try {
-                var shareFile = new File([csvContent], filename, { type: 'text/csv' });
-                if (navigator.canShare({ files: [shareFile] })) {
-                    navigator.share({ files: [shareFile], title: filename }).catch(function () {
-                        showCsvFallback(csvBody, filename);
-                    });
-                    return;
-                }
-            } catch (e) { /* fall through to blob download */ }
-        }
-
-        try {
-            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            var url = URL.createObjectURL(blob);
-            var link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
-            return;
-        } catch (e) { /* fall through to text fallback */ }
-
-        showCsvFallback(csvBody, filename);
-    }
-
-    function showCsvFallback(csvBody, filename) {
-        document.getElementById('csv-fallback-text').value = csvBody;
-        document.getElementById('csv-fallback-filename').innerText = filename;
-        document.getElementById('csvFallbackModal').style.display = 'block';
-    }
-
-    function closeCsvFallback() {
-        document.getElementById('csvFallbackModal').style.display = 'none';
-    }
-
-    function copyCsvFallback() {
-        var textarea = document.getElementById('csv-fallback-text');
-        textarea.select();
-        textarea.setSelectionRange(0, 999999);
-        var copied = false;
-        try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(textarea.value);
-                copied = true;
-            }
-        } catch (e) { /* fall through to execCommand */ }
-        if (!copied) {
-            try {
-                document.execCommand('copy');
-                copied = true;
-            } catch (e) { /* nothing more to try */ }
-        }
-        alert(copied ? '복사되었습니다. 메모장이나 카카오톡 등에 붙여넣기 하세요.' : '복사에 실패했습니다. 직접 선택해서 복사해주세요.');
     }
 
     function openHistory() {
