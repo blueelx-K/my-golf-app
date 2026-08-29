@@ -124,30 +124,30 @@
         .dashboard {
             background: var(--card-bg);
             border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 10px 8px;
+            margin-bottom: 12px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            gap: 4px;
             text-align: center;
         }
         .stat-box { border-right: 1px solid var(--border-color); }
         .stat-box:last-child { border-right: none; }
-        .stat-label { font-size: 0.75rem; color: #666; margin-bottom: 5px; }
-        .stat-value { font-size: 1.1rem; font-weight: bold; color: var(--primary-color); }
+        .stat-label { font-size: 0.68rem; color: #666; margin-bottom: 3px; }
+        .stat-value { font-size: 0.95rem; font-weight: bold; color: var(--primary-color); }
 
         .action-group {
             display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
         .btn-action {
             flex: 1;
-            padding: 12px;
+            padding: 8px;
             border: none;
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: bold;
             cursor: pointer;
             text-align: center;
@@ -444,6 +444,19 @@
         </div>
 
         <div id="history-list"></div>
+    </div>
+</div>
+
+<div id="csvFallbackModal" class="history-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin:0;">CSV 내용</h3>
+            <button onclick="closeCsvFallback()" style="padding:5px 10px; cursor:pointer;">닫기</button>
+        </div>
+        <p style="font-size:0.85rem; color:#666; margin-top:0;">기기에서 다운로드가 지원되지 않아요. 아래 내용을 복사해서 메모장, 카카오톡, 엑셀 앱 등에 붙여넣으세요.</p>
+        <div style="font-size:0.8rem; color:#999; margin-bottom:6px;" id="csv-fallback-filename"></div>
+        <textarea id="csv-fallback-text" readonly style="width:100%; height:200px; box-sizing:border-box; padding:10px; border-radius:6px; border:1px solid var(--border-color); font-size:0.8rem; margin-bottom:12px;"></textarea>
+        <button class="btn-action btn-save" style="width:100%;" onclick="copyCsvFallback()">전체 복사하기</button>
     </div>
 </div>
 
@@ -762,16 +775,66 @@
             rows.push(row.map(csvField).join(','));
         }
 
-        var csvContent = String.fromCharCode(0xFEFF) + rows.join('\r\n');
-        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.href = url;
-        link.download = '골프_라운딩_기록_' + new Date().toISOString().substring(0, 10) + '.csv';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        var csvBody = rows.join('\r\n');
+        var csvContent = String.fromCharCode(0xFEFF) + csvBody;
+        var filename = '골프_라운딩_기록_' + new Date().toISOString().substring(0, 10) + '.csv';
+
+        if (navigator.share && navigator.canShare) {
+            try {
+                var shareFile = new File([csvContent], filename, { type: 'text/csv' });
+                if (navigator.canShare({ files: [shareFile] })) {
+                    navigator.share({ files: [shareFile], title: filename }).catch(function () {
+                        showCsvFallback(csvBody, filename);
+                    });
+                    return;
+                }
+            } catch (e) { /* fall through to blob download */ }
+        }
+
+        try {
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+            return;
+        } catch (e) { /* fall through to text fallback */ }
+
+        showCsvFallback(csvBody, filename);
+    }
+
+    function showCsvFallback(csvBody, filename) {
+        document.getElementById('csv-fallback-text').value = csvBody;
+        document.getElementById('csv-fallback-filename').innerText = filename;
+        document.getElementById('csvFallbackModal').style.display = 'block';
+    }
+
+    function closeCsvFallback() {
+        document.getElementById('csvFallbackModal').style.display = 'none';
+    }
+
+    function copyCsvFallback() {
+        var textarea = document.getElementById('csv-fallback-text');
+        textarea.select();
+        textarea.setSelectionRange(0, 999999);
+        var copied = false;
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textarea.value);
+                copied = true;
+            }
+        } catch (e) { /* fall through to execCommand */ }
+        if (!copied) {
+            try {
+                document.execCommand('copy');
+                copied = true;
+            } catch (e) { /* nothing more to try */ }
+        }
+        alert(copied ? '복사되었습니다. 메모장이나 카카오톡 등에 붙여넣기 하세요.' : '복사에 실패했습니다. 직접 선택해서 복사해주세요.');
     }
 
     function openHistory() {
