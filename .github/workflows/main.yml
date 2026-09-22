@@ -17,7 +17,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-size: '16'
+          node-version: '20'
+
+      - name: Use Fixed Debug Keystore
+        # 러너는 빌드마다 새로 만들어지므로, 고정 키스토어를 심지 않으면
+        # Gradle이 매번 새 디버그 키를 생성해 서명이 달라진다.
+        # 서명이 달라지면 폰에서 덮어쓰기 업데이트가 거부된다.
+        run: |
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
 
       - name: Install Cordova Tool
         run: npm install -g cordova
@@ -26,7 +34,9 @@ jobs:
         run: |
           cordova create myapp com.sportpie.golfanalyzer "스포츠파이 골프분석기"
           cd myapp
-          cordova platform add android
+          # 버전을 고정하지 않으면 빌드할 때마다 최신 cordova-android를 받아와
+          # targetSdk가 멋대로 올라가고, 기기에 따라 설치가 거부될 수 있다.
+          cordova platform add android@^14.0.0
           rm -rf www/*
           cp ../index.html www/index.html
           mkdir -p res/icon/android
@@ -41,8 +51,17 @@ jobs:
           cd myapp
           cordova build android --device
 
+      - name: Rename APK With App Version
+        # 파일명이 매번 app-debug.apk면 폰 다운로드 폴더에서 예전 파일과 섞여
+        # 옛 버전을 다시 설치하는 사고가 난다. index.html의 버전을 파일명에 박는다.
+        run: |
+          VER=$(grep -oP "APP_VERSION = '\K[^']+" index.html)
+          echo "APP_VER=$VER" >> $GITHUB_ENV
+          cp myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk "GolfAnalyzer_${VER}.apk"
+          ls -la GolfAnalyzer_${VER}.apk
+
       - name: Upload Finished APK File
         uses: actions/upload-artifact@v4
         with:
-          name: GolfAnalyzer-Pure-App
-          path: myapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          name: GolfAnalyzer-${{ env.APP_VER }}
+          path: GolfAnalyzer_*.apk
