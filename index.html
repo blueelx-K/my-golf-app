@@ -320,6 +320,137 @@
             color: #fff;
             border-color: var(--primary-color);
         }
+        .hole-jump-btn { position: relative; }
+        .hole-jump-btn.has-memo::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #f9a825;
+        }
+        .hole-jump-btn.current.has-memo::after {
+            background-color: #ffe082;
+        }
+
+        .memo-block {
+            margin-top: 12px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+        .memo-block-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .memo-tag-strip {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+        .memo-tag {
+            flex: 0 0 auto;
+            padding: 6px 10px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            background-color: #fff;
+            font-size: 0.82rem;
+            color: #555;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .memo-tag.active {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-color: #2e7d32;
+            font-weight: bold;
+        }
+        .hole-memo-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            font-size: 0.9rem;
+            font-family: inherit;
+            resize: none;
+            height: 52px;
+        }
+
+        .autosave-note a {
+            color: var(--primary-color);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .review-head {
+            background: #edf7ed;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+        .review-head-title { font-weight: bold; font-size: 1rem; color: #1b5e20; }
+        .review-head-meta { font-size: 0.82rem; color: #4e5d4e; margin-top: 3px; }
+        .review-head-stats { font-size: 0.88rem; color: #2e7d32; font-weight: bold; margin-top: 6px; }
+        .review-round-memo {
+            font-size: 0.85rem;
+            color: #555;
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .review-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .review-filter { font-size: 0.85rem; color: #555; display: flex; align-items: center; gap: 5px; }
+        .btn-review-edit {
+            padding: 7px 12px;
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+            background: #fff;
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .review-hole {
+            border-bottom: 1px solid #eee;
+            padding: 8px 2px;
+        }
+        .review-hole:last-child { border-bottom: none; }
+        .review-hole-line {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            font-size: 0.88rem;
+        }
+        .review-hole-num { font-weight: bold; min-width: 42px; }
+        .review-hole-score { font-weight: bold; }
+        .review-hole-sub { color: #888; font-size: 0.8rem; }
+        .review-hole-memo {
+            font-size: 0.88rem;
+            color: #444;
+            margin-top: 4px;
+            padding-left: 50px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .review-empty { text-align: center; color: #999; padding: 20px 0; font-size: 0.9rem; }
+        .memo-badge { color: #f57c00; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -389,7 +520,7 @@
         <button class="btn-action btn-history" onclick="openHistory()">불러오기</button>
         <button class="btn-action btn-new" onclick="startNewRound()">새 라운딩</button>
     </div>
-    <div class="autosave-note" id="autosave-note">입력 내용은 자동으로 저장됩니다</div>
+    <div class="autosave-note" id="autosave-note">입력 내용은 자동으로 저장됩니다 · <a onclick="openCurrentReview()">라운딩 리뷰</a></div>
 
     <div class="hole-nav">
         <button class="hole-nav-btn" id="prev-hole-btn" onclick="prevHole()">‹ 이전 홀</button>
@@ -431,12 +562,35 @@
     </div>
 </div>
 
+<div id="reviewModal" class="history-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin:0;">라운딩 리뷰</h3>
+            <button onclick="closeReview()" style="padding:5px 10px; cursor:pointer;">닫기</button>
+        </div>
+        <div id="review-body"></div>
+    </div>
+</div>
+
 <script>
     var totalHoles = 18;
     var golfData = [];
     var currentEditingId = null;
     var currentHoleIndex = 0;
     var infoCardCollapsed = true;
+
+    var MEMO_TAGS = ['탑볼', '뒷땅', '슬라이스', '훅', '에이밍', '러프', '벙커', 'OB', '거리부족', '오르막', '내리막', '굿샷'];
+    var reviewMemoOnly = false;
+    var reviewSource = null;
+
+    function escapeHtml(str) {
+        return String(str === null || typeof str === 'undefined' ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
 
     function toggleInfoCard() {
         infoCardCollapsed = !infoCardCollapsed;
@@ -462,7 +616,7 @@
     function initHolesData() {
         golfData = [];
         for (var i = 0; i < totalHoles; i++) {
-            golfData.push({ holeNum: i + 1, par: 4, score: 4, fir: null, gir: null, putts: 2 });
+            golfData.push({ holeNum: i + 1, par: 4, score: 4, fir: null, gir: null, putts: 2, memo: '' });
         }
     }
 
@@ -471,8 +625,28 @@
             if (typeof holes[i].score !== 'number') {
                 holes[i].score = holes[i].par;
             }
+            if (typeof holes[i].memo !== 'string') {
+                holes[i].memo = '';
+            }
         }
         return holes;
+    }
+
+    function memoHasTag(memo, tag) {
+        var tokens = String(memo || '').split(/\s+/);
+        for (var i = 0; i < tokens.length; i++) {
+            if (tokens[i] === tag) return true;
+        }
+        return false;
+    }
+
+    function countMemoHoles(holes) {
+        if (!holes || !holes.length) return 0;
+        var n = 0;
+        for (var i = 0; i < holes.length; i++) {
+            if (holes[i].memo && String(holes[i].memo).trim() !== '') n++;
+        }
+        return n;
     }
 
     function renderCurrentHole() {
@@ -534,8 +708,72 @@
         html += '    </div>';
         html += '</div>';
 
+        html += '<div class="memo-block">';
+        html += '    <div class="memo-block-label">홀 메모</div>';
+        html += '    <div class="memo-tag-strip" id="memo-tag-strip-' + j + '">';
+        for (var t = 0; t < MEMO_TAGS.length; t++) {
+            var tagActive = memoHasTag(golfData[j].memo, MEMO_TAGS[t]) ? ' active' : '';
+            html += '<button type="button" class="memo-tag' + tagActive + '" id="memo-tag-' + t + '" onclick="toggleMemoTag(' + j + ', ' + t + ')">' + escapeHtml(MEMO_TAGS[t]) + '</button>';
+        }
+        html += '    </div>';
+        html += '    <textarea class="hole-memo-input" id="hole-memo-' + j + '" placeholder="예: 세컨샷 8번, 그린 오버 / 어프로치 절어서 12m 퍼팅" oninput="changeHoleMemo(' + j + ', this.value)"></textarea>';
+        html += '</div>';
+
         card.innerHTML = html;
         container.appendChild(card);
+
+        // 이스케이프 문제를 피하기 위해 메모는 DOM에 붙인 뒤 value로 주입한다
+        document.getElementById('hole-memo-' + j).value = golfData[j].memo || '';
+    }
+
+    function changeHoleMemo(index, value) {
+        golfData[index].memo = value;
+        refreshMemoTagStates(index);
+        updateMemoIndicator(index);
+        saveDraft();
+    }
+
+    function toggleMemoTag(index, tagIndex) {
+        var tag = MEMO_TAGS[tagIndex];
+        var current = golfData[index].memo || '';
+        var next;
+
+        if (memoHasTag(current, tag)) {
+            var kept = [];
+            var tokens = current.split(/\s+/);
+            for (var i = 0; i < tokens.length; i++) {
+                if (tokens[i] !== '' && tokens[i] !== tag) kept.push(tokens[i]);
+            }
+            next = kept.join(' ');
+        } else {
+            next = current.replace(/\s+$/, '');
+            next = next === '' ? tag : (next + ' ' + tag);
+        }
+
+        golfData[index].memo = next;
+        var field = document.getElementById('hole-memo-' + index);
+        if (field) field.value = next;
+        refreshMemoTagStates(index);
+        updateMemoIndicator(index);
+        saveDraft();
+    }
+
+    function refreshMemoTagStates(index) {
+        var strip = document.getElementById('memo-tag-strip-' + index);
+        if (!strip) return;
+        var memo = golfData[index].memo || '';
+        for (var t = 0; t < MEMO_TAGS.length; t++) {
+            var btn = document.getElementById('memo-tag-' + t);
+            if (btn) btn.className = 'memo-tag' + (memoHasTag(memo, MEMO_TAGS[t]) ? ' active' : '');
+        }
+    }
+
+    function updateMemoIndicator(index) {
+        var strip = document.getElementById('hole-jump-strip');
+        if (!strip || !strip.children[index]) return;
+        var btn = strip.children[index];
+        var hasMemo = !!(golfData[index].memo && String(golfData[index].memo).trim() !== '');
+        btn.className = 'hole-jump-btn' + (index === currentHoleIndex ? ' current' : '') + (hasMemo ? ' has-memo' : '');
     }
 
     function renderHoleNav() {
@@ -546,8 +784,9 @@
         var strip = document.getElementById('hole-jump-strip');
         strip.innerHTML = '';
         for (var i = 0; i < totalHoles; i++) {
+            var hasMemo = !!(golfData[i] && golfData[i].memo && String(golfData[i].memo).trim() !== '');
             var btn = document.createElement('button');
-            btn.className = 'hole-jump-btn' + (i === currentHoleIndex ? ' current' : '');
+            btn.className = 'hole-jump-btn' + (i === currentHoleIndex ? ' current' : '') + (hasMemo ? ' has-memo' : '');
             btn.textContent = i + 1;
             btn.onclick = (function (idx) { return function () { goToHole(idx); }; })(i);
             strip.appendChild(btn);
@@ -755,14 +994,19 @@
                 ? item.stats.totalScore + '타 (' + formatDiff(item.stats.scoreDiff) + ') | '
                 : '';
 
+            var memoHoleCount = countMemoHoles(item.holes);
+
             var inner = '';
-            inner += '<div class="history-clickable" onclick="loadRounding(' + item.id + ')">';
-            inner += '    <div class="history-meta">' + item.date + '</div>';
-            inner += '    <div class="history-title">⛳ ' + item.ccName + '</div>';
+            inner += '<div class="history-clickable" onclick="openSavedReview(' + item.id + ')">';
+            inner += '    <div class="history-meta">' + escapeHtml(item.date) + '</div>';
+            inner += '    <div class="history-title">⛳ ' + escapeHtml(item.ccName) + '</div>';
             if(item.memo) {
-                inner += '    <div style="font-size:0.85rem; color:#666; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📝 ' + item.memo + '</div>';
+                inner += '    <div style="font-size:0.85rem; color:#666; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📝 ' + escapeHtml(item.memo) + '</div>';
             }
             inner += '    <div class="history-stats">' + scoreText + 'FIR: ' + item.stats.firRate + '% | GIR: ' + item.stats.girRate + '% | 퍼팅: ' + item.stats.avgPutts + '개</div>';
+            if (memoHoleCount > 0) {
+                inner += '    <div class="history-stats memo-badge">📝 홀 메모 ' + memoHoleCount + '개</div>';
+            }
             inner += '</div>';
             inner += '<button class="btn-delete" onclick="deleteRounding(' + item.id + ', event)" title="삭제">&times;</button>';
 
@@ -773,6 +1017,124 @@
 
     function closeHistory() {
         document.getElementById('historyModal').style.display = 'none';
+    }
+
+    function openCurrentReview() {
+        reviewSource = {
+            id: null,
+            date: document.getElementById('round-date').value,
+            ccName: document.getElementById('cc-name').value.trim() || '이름 없는 CC',
+            memo: document.getElementById('round-memo').value,
+            stats: calculateStats(),
+            holes: golfData
+        };
+        reviewMemoOnly = false;
+        renderReview();
+        document.getElementById('reviewModal').style.display = 'block';
+    }
+
+    function openSavedReview(id) {
+        var history = JSON.parse(localStorage.getItem('golfHistory') || '[]');
+        var target = null;
+        for (var i = 0; i < history.length; i++) {
+            if (history[i].id === id) { target = history[i]; break; }
+        }
+        if (!target) return;
+
+        reviewSource = {
+            id: target.id,
+            date: target.date,
+            ccName: target.ccName,
+            memo: target.memo || '',
+            stats: target.stats || {},
+            holes: normalizeHoles(target.holes || [])
+        };
+        reviewMemoOnly = false;
+        renderReview();
+        document.getElementById('reviewModal').style.display = 'block';
+    }
+
+    function toggleReviewMemoOnly(checked) {
+        reviewMemoOnly = checked;
+        renderReview();
+    }
+
+    function closeReview() {
+        document.getElementById('reviewModal').style.display = 'none';
+    }
+
+    function editFromReview() {
+        if (reviewSource && reviewSource.id !== null) {
+            closeReview();
+            loadRounding(reviewSource.id);
+        }
+    }
+
+    function renderReview() {
+        var body = document.getElementById('review-body');
+        if (!reviewSource) { body.innerHTML = ''; return; }
+
+        var s = reviewSource.stats || {};
+        var holes = reviewSource.holes || [];
+        var memoCount = countMemoHoles(holes);
+
+        var scoreText = typeof s.totalScore === 'number'
+            ? (s.totalScore + '타 (' + formatDiff(s.scoreDiff) + ')')
+            : '-';
+
+        var html = '';
+        html += '<div class="review-head">';
+        html += '    <div class="review-head-title">⛳ ' + escapeHtml(reviewSource.ccName) + '</div>';
+        html += '    <div class="review-head-meta">' + escapeHtml(reviewSource.date) + ' · 메모 ' + memoCount + '홀</div>';
+        html += '    <div class="review-head-stats">' + scoreText
+             + ' | FIR ' + (typeof s.firRate === 'undefined' ? '-' : s.firRate) + '%'
+             + ' | GIR ' + (typeof s.girRate === 'undefined' ? '-' : s.girRate) + '%'
+             + ' | 퍼팅 ' + (typeof s.avgPutts === 'undefined' ? '-' : s.avgPutts) + '개</div>';
+        html += '</div>';
+
+        if (reviewSource.memo && reviewSource.memo.trim() !== '') {
+            html += '<div class="review-round-memo">📝 ' + escapeHtml(reviewSource.memo) + '</div>';
+        }
+
+        html += '<div class="review-toolbar">';
+        html += '    <label class="review-filter"><input type="checkbox" onchange="toggleReviewMemoOnly(this.checked)"' + (reviewMemoOnly ? ' checked' : '') + '> 메모 있는 홀만 보기</label>';
+        if (reviewSource.id !== null) {
+            html += '    <button class="btn-review-edit" onclick="editFromReview()">이 라운딩 이어서 수정</button>';
+        }
+        html += '</div>';
+
+        var shown = 0;
+        var rows = '';
+        for (var i = 0; i < holes.length; i++) {
+            var h = holes[i];
+            var hasMemo = !!(h.memo && String(h.memo).trim() !== '');
+            if (reviewMemoOnly && !hasMemo) continue;
+            shown++;
+
+            var diff = (typeof h.score === 'number' ? h.score : h.par) - h.par;
+            var diffClass = diff < 0 ? ' score-under' : (diff > 0 ? ' score-over' : '');
+            var firText = h.par === 3 ? '-' : (h.fir === true ? 'O' : (h.fir === false ? 'X' : '-'));
+            var girText = h.gir === true ? 'O' : (h.gir === false ? 'X' : '-');
+
+            rows += '<div class="review-hole">';
+            rows += '    <div class="review-hole-line">';
+            rows += '        <span class="review-hole-num">' + h.holeNum + '번</span>';
+            rows += '        <span class="review-hole-score' + diffClass + '">' + (typeof h.score === 'number' ? h.score : h.par) + '타 (' + formatDiff(diff) + ')</span>';
+            rows += '        <span class="review-hole-sub">Par ' + h.par + ' · 퍼팅 ' + h.putts + ' · F ' + firText + ' / G ' + girText + '</span>';
+            rows += '    </div>';
+            if (hasMemo) {
+                rows += '    <div class="review-hole-memo">' + escapeHtml(h.memo) + '</div>';
+            }
+            rows += '</div>';
+        }
+
+        if (shown === 0) {
+            html += '<div class="review-empty">' + (reviewMemoOnly ? '메모를 남긴 홀이 아직 없습니다.' : '홀 데이터가 없습니다.') + '</div>';
+        } else {
+            html += rows;
+        }
+
+        body.innerHTML = html;
     }
 
     function loadRounding(id) {
